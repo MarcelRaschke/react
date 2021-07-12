@@ -8,7 +8,7 @@ Before proceeding, consider your motivation:
 
 - **"I want to share experimental features with collaborators."** After your code lands in GitHub (behind an experimental feature flag), it will be automatically published via CI within the next weekday. So usually, all you have to do is wait.
 - **"But I want to publish it now!"** You can [trigger the CI job to run automatically](#trigger-an-automated-prerelease).
-- **"I want to publish a stable release with a real version number"** Refer to the ["Publishing a Stable Release"]((#publishing-a-stable-release)) section. If this is your first time running a stable release, consult with another team member before proceeding.
+- **"I want to publish a stable release with a real version number"** Refer to the ["Publishing a Stable Release"](#publishing-a-stable-release) section. If this is your first time running a stable release, consult with another team member before proceeding.
 - **"I have some special use case that's not explicitly mentioned here."** Read the rest of this document, and consult with another team member before proceeding.
 
 # Process
@@ -87,7 +87,7 @@ Stable releases should always be created from the "next" channel. This encourage
 To prepare a stable release, choose a "next" version and run the [`prepare-release-from-npm`](#prepare-release-from-npm) script <sup>1</sup>:
 
 ```sh
-scripts/release/prepare-release-from-npm.js --version=0.0.0-241c4467e
+scripts/release/prepare-release-from-npm.js --version=0.0.0-241c4467e-20200129
 ```
 
 This script will prompt you to select stable version numbers for each of the packages. It will update the package JSON versions (and dependencies) based on the numbers you select.
@@ -165,9 +165,9 @@ This script prompts for new (stable) release versions for each public package an
 "Next" releases have already been tested but it is still a good idea to **manually test and verify a release** before publishing to ensure that e.g. version numbers are correct. Upon completion, this script prints manual testing instructions.
 
 #### Example usage
-To promote the "next" release `0.0.0-241c4467e` (aka commit [241c4467e](https://github.com/facebook/react/commit/241c4467e)) to stable:
+To promote the "next" release `0.0.0-241c4467e-20200129` (aka commit [241c4467e](https://github.com/facebook/react/commit/241c4467e)) to stable:
 ```sh
-scripts/release/prepare-release-from-npm.js --version=0.0.0-241c4467e
+scripts/release/prepare-release-from-npm.js --version=0.0.0-241c4467e-20200129
 ```
 
 ## `publish`
