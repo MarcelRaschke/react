@@ -50,10 +50,14 @@ import {
   popCachePool,
 } from './ReactFiberCacheComponent.new';
 import {transferActualDuration} from './ReactProfilerTimer.new';
-
-import invariant from 'shared/invariant';
+import {popTreeContext} from './ReactFiberTreeContext.new';
 
 function unwindWork(workInProgress: Fiber, renderLanes: Lanes) {
+  // Note: This intentionally doesn't check if we're hydrating because comparing
+  // to the current tree provider fiber is just as fast and less error-prone.
+  // Ideally we would have a special version of the work loop only
+  // for hydration.
+  popTreeContext(workInProgress);
   switch (workInProgress.tag) {
     case ClassComponent: {
       const Component = workInProgress.type;
@@ -85,13 +89,17 @@ function unwindWork(workInProgress: Fiber, renderLanes: Lanes) {
       popTopLevelLegacyContextObject(workInProgress);
       resetMutableSourceWorkInProgressVersions();
       const flags = workInProgress.flags;
-      invariant(
-        (flags & DidCapture) === NoFlags,
-        'The root failed to unmount after an error. This is likely a bug in ' +
-          'React. Please file an issue.',
-      );
-      workInProgress.flags = (flags & ~ShouldCapture) | DidCapture;
-      return workInProgress;
+      if (
+        (flags & ShouldCapture) !== NoFlags &&
+        (flags & DidCapture) === NoFlags
+      ) {
+        // There was an error during render that wasn't captured by a suspense
+        // boundary. Do a second pass on the root to unmount the children.
+        workInProgress.flags = (flags & ~ShouldCapture) | DidCapture;
+        return workInProgress;
+      }
+      // We unwound to the root without completing it. Exit.
+      return null;
     }
     case HostComponent: {
       // TODO: popHydrationState
@@ -104,11 +112,13 @@ function unwindWork(workInProgress: Fiber, renderLanes: Lanes) {
         const suspenseState: null | SuspenseState =
           workInProgress.memoizedState;
         if (suspenseState !== null && suspenseState.dehydrated !== null) {
-          invariant(
-            workInProgress.alternate !== null,
-            'Threw in newly mounted dehydrated component. This is likely a bug in ' +
-              'React. Please file an issue.',
-          );
+          if (workInProgress.alternate === null) {
+            throw new Error(
+              'Threw in newly mounted dehydrated component. This is likely a bug in ' +
+                'React. Please file an issue.',
+            );
+          }
+
           resetHydrationState();
         }
       }
@@ -161,6 +171,11 @@ function unwindWork(workInProgress: Fiber, renderLanes: Lanes) {
 }
 
 function unwindInterruptedWork(interruptedWork: Fiber, renderLanes: Lanes) {
+  // Note: This intentionally doesn't check if we're hydrating because comparing
+  // to the current tree provider fiber is just as fast and less error-prone.
+  // Ideally we would have a special version of the work loop only
+  // for hydration.
+  popTreeContext(interruptedWork);
   switch (interruptedWork.tag) {
     case ClassComponent: {
       const childContextTypes = interruptedWork.type.childContextTypes;
